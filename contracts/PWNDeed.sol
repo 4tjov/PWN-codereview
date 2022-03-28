@@ -253,6 +253,7 @@ contract PWNDeed is ERC1155, Ownable {
      * @param _offer Hash identifying an offer
      * @param _owner Address of the borrower who issued the Deed
      */
+    // FINDME posilat hodne nabidek, ktere nemaji volny kredit na pujceni
     function acceptOffer(
         uint256 _did,
         bytes32 _offer,
@@ -291,6 +292,8 @@ contract PWNDeed is ERC1155, Ownable {
     function repayLoan(uint256 _did) external onlyPWN {
         require(
             getDeedStatus(_did) == 2,
+            //FINDME: spatne napsana chybova hlaska,
+            // uzivatel muze zkouset platit po vyprseni terminu
             "Deed doesn't have an accepted offer to be paid back"
         );
 
@@ -345,6 +348,7 @@ contract PWNDeed is ERC1155, Ownable {
     function getDeedStatus(uint256 _did) public view returns (uint8) {
         if (
             deeds[_did].expiration > 0 &&
+            // FINDME: block.timestamp neslo by si s tim hrat?
             deeds[_did].expiration < block.timestamp &&
             deeds[_did].status != 3
         ) {
