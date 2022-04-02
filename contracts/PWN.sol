@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // FINDME je mozne vytvorit hodne offeru, ktere nebudou mit dostatecny kredit a tim penezne vycerpat toho kdo si pujcuje
-pragma solidity 0.8.4;
+// FINDME moc dotazu do kontraktu a je mozne zaspamovat deed offerama ktere nejsou prijmout? Nebylo by lepsi aby offerer mel nejaky pool v PWN_Vault ze ktereho by se to pro offer vzdy sebralo a uzamklo
+pragma solidity 0.8.3;
 
 import "./PWNVault.sol";
 import "./PWNDeed.sol";
@@ -44,9 +45,11 @@ contract PWN is Ownable {
      * @param _assetCategory Category of the asset - see { MultiToken.sol }
      * @param _duration Loan duration in seconds
      * @param _assetId ID of an ERC721 or ERC1155 token || 0 in case the token doesn't have IDs
-     * @param _assetAmount Amount of an ERC20 or ERC1155 token || 0 in case of NFTs
+     * @param _assetAmount Amount of an ERC20 or ERC1155 token || 0 in case of NFTs FINDME: tohle se nikde nekontroluje ale to asi neni problem
      * @return a Deed ID of the newly created Deed
      */
+    // FINDME: poradi argumentu
+    // FINDME: neni mozne rucit vice typy v jednom deed kontraktu
     function createDeed(
         address _assetAddress,
         MultiToken.Category _assetCategory,
@@ -85,7 +88,7 @@ contract PWN is Ownable {
      * makeOffer
      * @dev this is the function used by lenders to cast their offers
      * @dev this function doesn't assume the asset is approved yet for PWNVault
-     * @dev this function requires lender to have a sufficient balance
+     * @dev this function requires lender to have a sufficient balance FINDME: tohle neni vubec pravda, nic takoveho nekontroluje
      * @param _assetAddress Address of the asset contract
      * @param _assetAmount Amount of an ERC20 token to be offered as loan
      * @param _did ID of the Deed the offer should be bound to

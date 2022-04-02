@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-pragma solidity 0.8.4;
+pragma solidity 0.8.3;
 
 import "@pwnfinance/contracts/MultiToken.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -158,7 +158,7 @@ contract PWNDeed is ERC1155, Ownable {
 
     /**
      * revoke
-     * @dev Burns a deed token
+     * @dev Burns a deed token FINDME spatnej koment, tohle deed nespali jen mu nastavi status PWN funkce deed token spali
      * @param _did Deed ID of the token to be burned
      * @param _owner Address of the borrower who issued the Deed
      */
@@ -187,6 +187,7 @@ contract PWNDeed is ERC1155, Ownable {
      * @param _did ID of the Deed the offer should be bound to
      * @param _toBePaid Amount to be paid back by the borrower
      * @return hash of the newly created offer
+     // FINDME neni to podle whitepaperu, protoze to neprijima ECR1155
      */
     function makeOffer(
         address _assetAddress,
@@ -199,7 +200,7 @@ contract PWNDeed is ERC1155, Ownable {
 
         bytes32 hash = keccak256(abi.encodePacked(_lender, nonce));
         nonce++;
-
+        // FINDME mozna zkontrolovat, jestli je toBePaid vetsi nez assetAmount, aby se zabranilo liske chybe?
         Offer storage offer = offers[hash];
         offer.loan.assetAddress = _assetAddress;
         offer.loan.amount = _assetAmount;
@@ -270,6 +271,7 @@ contract PWNDeed is ERC1155, Ownable {
         deed.borrower = _owner;
         /**
          * FINDME: Tohle nekoresponduje s WP, kde se rika:
+         * FINDME nemazou se offers, ktery neni mozne prijmout, kvuli jiz prijmutemu tokenu to asi bude dobre
          * The borrowing party sets an expiration date at creation. A recommended
          * duration of a deed is 1 - 3 months. The duration won’t be adjustable based on
          * when an offer is accepted creating an incentive to accept offers rather sooner
@@ -323,6 +325,7 @@ contract PWNDeed is ERC1155, Ownable {
      * @param _did ID of the Deed which is burned
      * @param _owner Address of the deed token owner
      */
+    // obe podminky jsou zbytecne
     function burn(uint256 _did, address _owner) external onlyPWN {
         require(balanceOf(_owner, _did) == 1, "Caller is not the deed owner");
         require(deeds[_did].status == 0, "Deed can't be burned at this stage");

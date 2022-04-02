@@ -150,6 +150,10 @@ def revoke_deed(deed_id, revoker):
     tx = pwn.revokeDeed(deed_id, {"from": revoker})
     tx.wait(1)
 
+def revoke_offer(offer_id, revoker):
+    pwn = PWN[-1]
+    tx = pwn.revokeOffer(offer_id, {"from": revoker})
+    tx.wait(1)
 
 def main():
     PWN_OWNER = get_account(index=0)
