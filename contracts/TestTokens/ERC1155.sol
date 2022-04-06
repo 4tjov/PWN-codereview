@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /**
  * @dev this is just a dummy mintable/burnable ERC20 for testing purposes
  */
-contract ECR1155MyToken is ERC1155, Ownable {
+contract ERC1155MyToken is ERC1155, Ownable {
     event TokenCreated(address indexed owner_address, uint256 id);
 
     constructor(string memory uri) public ERC1155(uri) Ownable() {}

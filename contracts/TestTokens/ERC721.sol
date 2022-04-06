@@ -5,7 +5,7 @@ pragma solidity 0.8.3;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-contract ECR721MyToken is ERC721, Ownable {
+contract ERC721MyToken is ERC721, Ownable {
     event TokenCreated(address indexed owner_address, uint256 id);
 
     uint256 private id;

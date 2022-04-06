@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 import "@pwnfinance/contracts/MultiToken.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -30,11 +30,8 @@ contract PWNVault is Ownable, IERC1155Receiver {
 
     event VaultPush(MultiToken.Asset asset, address indexed origin);
     event VaultPull(MultiToken.Asset asset, address indexed beneficiary);
-    event VaultProxy(
-        MultiToken.Asset asset,
-        address indexed origin,
-        address indexed beneficiary
-    );
+    event VaultProxy(MultiToken.Asset asset, address indexed origin, address indexed beneficiary);
+
 
     /*----------------------------------------------------------*|
     |*  # CONSTRUCTOR & FUNCTIONS                               *|
@@ -45,7 +42,8 @@ contract PWNVault is Ownable, IERC1155Receiver {
      * @dev this contract holds balances of all locked collateral & paid back loan prior to their rightful claims
      * @dev in order for the vault to work it has to have an association with the PWN logic via `.setPWN(PWN.address)`
      */
-    constructor() Ownable() IERC1155Receiver() {}
+    constructor() Ownable() IERC1155Receiver() {
+    }
 
     /**
      * push
@@ -54,11 +52,7 @@ contract PWNVault is Ownable, IERC1155Receiver {
      * @param _asset An asset construct - for definition see { MultiToken.sol }
      * @return true if successful
      */
-    function push(MultiToken.Asset memory _asset, address _origin)
-        external
-        onlyPWN
-        returns (bool)
-    {
+    function push(MultiToken.Asset memory _asset, address _origin) external onlyPWN returns (bool) {
         _asset.transferAssetFrom(_origin, address(this));
         emit VaultPush(_asset, _origin);
         return true;
@@ -72,11 +66,7 @@ contract PWNVault is Ownable, IERC1155Receiver {
      * @param _beneficiary An address of the recipient of the asset - is set in the PWN logic contract
      * @return true if successful
      */
-    function pull(MultiToken.Asset memory _asset, address _beneficiary)
-        external
-        onlyPWN
-        returns (bool)
-    {
+    function pull(MultiToken.Asset memory _asset, address _beneficiary) external onlyPWN returns (bool) {
         _asset.transferAsset(_beneficiary);
         emit VaultPull(_asset, _beneficiary);
         return true;
@@ -91,16 +81,12 @@ contract PWNVault is Ownable, IERC1155Receiver {
      * @param _beneficiary An address of the recipient of the asset - is set in the PWN logic contract
      * @return true if successful
      */
-    function pullProxy(
-        MultiToken.Asset memory _asset,
-        address _origin,
-        address _beneficiary
-    ) external onlyPWN returns (bool) {
+    function pullProxy(MultiToken.Asset memory _asset, address _origin, address _beneficiary) external onlyPWN returns (bool) {
         _asset.transferAssetFrom(_origin, _beneficiary);
         emit VaultProxy(_asset, _origin, _beneficiary);
         return true;
     }
-
+    
     /**
      * @dev Handles the receipt of a single ERC1155 token type. This function is
      * called at the end of a `safeTransferFrom` after the balance has been updated.
@@ -120,10 +106,15 @@ contract PWNVault is Ownable, IERC1155Receiver {
         uint256 id,
         uint256 value,
         bytes calldata data
-    ) external pure override returns (bytes4) {
+    )
+        override
+        external
+        pure
+        returns(bytes4)
+    {
         return 0xf23a6e61;
     }
-
+    
     /**
      * @dev Handles the receipt of a multiple ERC1155 token types. This function
      * is called at the end of a `safeBatchTransferFrom` after the balances have
@@ -143,7 +134,12 @@ contract PWNVault is Ownable, IERC1155Receiver {
         uint256[] calldata ids,
         uint256[] calldata values,
         bytes calldata data
-    ) external pure override returns (bytes4) {
+    )
+        override
+        external
+        pure
+        returns(bytes4)
+    {
         return 0xbc197c81;
     }
 
@@ -164,21 +160,16 @@ contract PWNVault is Ownable, IERC1155Receiver {
      *
      * This function call must use less than 30 000 gas.
      */
-    function supportsInterface(bytes4 interfaceId)
-        external
-        pure
-        override
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
         return
             interfaceId == type(IERC165).interfaceId || // ERC165
             interfaceId == type(Ownable).interfaceId || // Ownable
             interfaceId == type(IERC1155Receiver).interfaceId || // ERC1155Receiver
-            interfaceId ==
-            this.PWN.selector ^
-                this.push.selector ^
-                this.pull.selector ^
-                this.pullProxy.selector ^
-                this.setPWN.selector; // PWN Vault
+            interfaceId == this.PWN.selector
+                            ^ this.push.selector
+                            ^ this.pull.selector
+                            ^ this.pullProxy.selector
+                            ^ this.setPWN.selector; // PWN Vault
+
     }
 }

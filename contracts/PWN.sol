@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
-// FINDME je mozne vytvorit hodne offeru, ktere nebudou mit dostatecny kredit a tim penezne vycerpat toho kdo si pujcuje
-// FINDME moc dotazu do kontraktu a je mozne zaspamovat deed offerama ktere nejsou prijmout? Nebylo by lepsi aby offerer mel nejaky pool v PWN_Vault ze ktereho by se to pro offer vzdy sebralo a uzamklo
-pragma solidity 0.8.3;
+
+pragma solidity 0.8.4;
 
 import "./PWNVault.sol";
 import "./PWNDeed.sol";
@@ -9,6 +8,7 @@ import "@pwnfinance/contracts/MultiToken.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract PWN is Ownable {
+
     /*----------------------------------------------------------*|
     |*  # VARIABLES & CONSTANTS DEFINITIONS                     *|
     |*----------------------------------------------------------*/
@@ -33,7 +33,10 @@ contract PWN is Ownable {
      * @param _PWND Address of the PWNDeed contract - defines Deed tokens
      * @param _PWNV Address of the PWNVault contract - holds assets
      */
-    constructor(address _PWND, address _PWNV) Ownable() {
+    constructor(
+        address _PWND,
+        address _PWNV
+    ) Ownable() {
         deed = PWNDeed(_PWND);
         vault = PWNVault(_PWNV);
     }
@@ -45,11 +48,9 @@ contract PWN is Ownable {
      * @param _assetCategory Category of the asset - see { MultiToken.sol }
      * @param _duration Loan duration in seconds
      * @param _assetId ID of an ERC721 or ERC1155 token || 0 in case the token doesn't have IDs
-     * @param _assetAmount Amount of an ERC20 or ERC1155 token || 0 in case of NFTs FINDME: tohle se nikde nekontroluje ale to asi neni problem
+     * @param _assetAmount Amount of an ERC20 or ERC1155 token || 0 in case of NFTs
      * @return a Deed ID of the newly created Deed
      */
-    // FINDME: poradi argumentu
-    // FINDME: neni mozne rucit vice typy v jednom deed kontraktu
     function createDeed(
         address _assetAddress,
         MultiToken.Category _assetCategory,
@@ -57,15 +58,7 @@ contract PWN is Ownable {
         uint256 _assetId,
         uint256 _assetAmount
     ) external returns (uint256) {
-        uint256 did = deed.create(
-            _assetAddress,
-            _assetCategory,
-            _duration,
-            _assetId,
-            _assetAmount,
-            msg.sender
-        );
-        // FINDME: Check return value
+        uint256 did = deed.create(_assetAddress, _assetCategory, _duration, _assetId, _assetAmount, msg.sender);
         vault.push(deed.getDeedCollateral(did), msg.sender);
 
         return did;
@@ -78,7 +71,6 @@ contract PWN is Ownable {
      */
     function revokeDeed(uint256 _did) external {
         deed.revoke(_did, msg.sender);
-        // FINDME: Check return value
         vault.pull(deed.getDeedCollateral(_did), msg.sender);
 
         deed.burn(_did, msg.sender);
@@ -88,7 +80,7 @@ contract PWN is Ownable {
      * makeOffer
      * @dev this is the function used by lenders to cast their offers
      * @dev this function doesn't assume the asset is approved yet for PWNVault
-     * @dev this function requires lender to have a sufficient balance FINDME: tohle neni vubec pravda, nic takoveho nekontroluje
+     * @dev this function requires lender to have a sufficient balance
      * @param _assetAddress Address of the asset contract
      * @param _assetAmount Amount of an ERC20 token to be offered as loan
      * @param _did ID of the Deed the offer should be bound to
@@ -101,14 +93,7 @@ contract PWN is Ownable {
         uint256 _did,
         uint256 _toBePaid
     ) external returns (bytes32) {
-        return
-            deed.makeOffer(
-                _assetAddress,
-                _assetAmount,
-                msg.sender,
-                _did,
-                _toBePaid
-            );
+        return deed.makeOffer(_assetAddress, _assetAmount, msg.sender, _did, _toBePaid);
     }
 
     /**
@@ -147,7 +132,7 @@ contract PWN is Ownable {
      * repayLoan
      * @dev the borrower can pay back the funds through this function
      * @dev the function assumes the asset (and amount to be paid back) to be returned is approved for PWNVault
-     * @dev the function assumes the borrower has the full amount to be paid back in their account # FINDME muze to predpokladat?
+     * @dev the function assumes the borrower has the full amount to be paid back in their account
      * @param _did Deed ID of the deed being paid back
      * @return true if successful
      */
@@ -156,7 +141,7 @@ contract PWN is Ownable {
 
         bytes32 offer = deed.getAcceptedOffer(_did);
         MultiToken.Asset memory loan = deed.getOfferLoan(offer);
-        loan.amount = deed.toBePaid(offer); //override the num of loan given
+        loan.amount = deed.toBePaid(offer);  //override the num of loan given
 
         vault.pull(deed.getDeedCollateral(_did), deed.getBorrower(_did));
         vault.push(loan, msg.sender);
@@ -181,6 +166,7 @@ contract PWN is Ownable {
             loan.amount = deed.toBePaid(offer);
 
             vault.pull(loan, msg.sender);
+
         } else if (status == 4) {
             vault.pull(deed.getDeedCollateral(_did), msg.sender);
         }
@@ -189,4 +175,5 @@ contract PWN is Ownable {
 
         return true;
     }
+
 }

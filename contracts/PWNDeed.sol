@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.4;
 
 import "@pwnfinance/contracts/MultiToken.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 contract PWNDeed is ERC1155, Ownable {
+
     /*----------------------------------------------------------*|
     |*  # VARIABLES & CONSTANTS DEFINITIONS                     *|
     |*----------------------------------------------------------*/
 
-    address public PWN; // necessary msg.sender for all Deed related manipulations
-    uint256 public id; // simple DeedID counter
-    // FINDME: Tohle opravdu neni privatni... vzdyt se mozne to dopocitat podle poctu transakci ktere byly udelany
-    uint256 private nonce; // server for offer hash generation
+    address public PWN;                 // necessary msg.sender for all Deed related manipulations
+    uint256 public id;                  // simple DeedID counter
+    uint256 private nonce;              // server for offer hash generation
 
     /**
      * Construct defining a Deed
@@ -36,14 +36,6 @@ contract PWNDeed is ERC1155, Ownable {
         bytes32[] pendingOffers;
     }
 
-    /* Statuses
-     * 0 - Dead/None - Deed is not created or have been claimed and can be burned
-     * 1 - Open - Deed is created and is accepting offers
-     * 2 - Running - Deed has an accepted offer and expiration date, which is set at the time of acceptance.
-     * 3 - Paid back - Deed had been fully paid back before expiration date. Deed owner is able to claim lended credit + interest.
-     * 4 - Expired - Deed had not been fully paid back before expiration date. Deed owner is able to claim collateral.
-     */
-
     /**
      * Construct defining an offer
      * @param did Deed ID the offer is bound to
@@ -58,29 +50,15 @@ contract PWNDeed is ERC1155, Ownable {
         MultiToken.Asset loan;
     }
 
-    mapping(uint256 => Deed) public deeds; // mapping of all Deed data
-    mapping(bytes32 => Offer) public offers; // mapping of all Offer data
+    mapping (uint256 => Deed) public deeds;             // mapping of all Deed data
+    mapping (bytes32 => Offer) public offers;           // mapping of all Offer data
 
     /*----------------------------------------------------------*|
     |*  # EVENTS & ERRORS DEFINITIONS                           *|
     |*----------------------------------------------------------*/
 
-    event DeedCreated(
-        address indexed assetAddress,
-        MultiToken.Category category,
-        uint256 id,
-        uint256 amount,
-        uint32 duration,
-        uint256 indexed did
-    );
-    event OfferMade(
-        address assetAddress,
-        uint256 amount,
-        address indexed lender,
-        uint256 toBePaid,
-        uint256 indexed did,
-        bytes32 offer
-    );
+    event DeedCreated(address indexed assetAddress, MultiToken.Category category, uint256 id, uint256 amount, uint32 duration, uint256 indexed did);
+    event OfferMade(address assetAddress, uint256 amount, address indexed lender, uint256 toBePaid, uint256 indexed did, bytes32 offer);
     event DeedRevoked(uint256 did);
     event OfferRevoked(bytes32 offer);
     event OfferAccepted(uint256 did, bytes32 offer);
@@ -106,7 +84,9 @@ contract PWNDeed is ERC1155, Ownable {
      *  @dev Once the PWN contract is set, you'll have to call `this.setPWN(PWN.address)` for this contract to work
      *  @param _uri Uri to be used for finding the token metadata (https://api.pwn.finance/deed/...)
      */
-    constructor(string memory _uri) ERC1155(_uri) Ownable() {}
+    constructor(string memory _uri) ERC1155(_uri) Ownable() {
+
+    }
 
     /*
      *   All contracts of this section can only be called by the PWN contract itself - once set via `setPWN(PWN.address)`
@@ -144,33 +124,23 @@ contract PWNDeed is ERC1155, Ownable {
 
         deed.status = 1;
 
-        emit DeedCreated(
-            _assetAddress,
-            _assetCategory,
-            _assetId,
-            _assetAmount,
-            _duration,
-            id
-        );
+        emit DeedCreated(_assetAddress, _assetCategory, _assetId, _assetAmount, _duration, id);
 
         return id;
     }
 
     /**
      * revoke
-     * @dev Burns a deed token FINDME spatnej koment, tohle deed nespali jen mu nastavi status PWN funkce deed token spali
+     * @dev Burns a deed token
      * @param _did Deed ID of the token to be burned
      * @param _owner Address of the borrower who issued the Deed
      */
-    function revoke(uint256 _did, address _owner) external onlyPWN {
-        require(
-            balanceOf(_owner, _did) == 1,
-            "The deed doesn't belong to the caller"
-        );
-        require(
-            getDeedStatus(_did) == 1,
-            "Deed can't be revoked at this stage"
-        );
+    function revoke(
+        uint256 _did,
+        address _owner
+    ) external onlyPWN {
+        require(balanceOf(_owner, _did) == 1, "The deed doesn't belong to the caller");
+        require(getDeedStatus(_did) == 1, "Deed can't be revoked at this stage");
 
         deeds[_did].status = 0;
 
@@ -187,7 +157,6 @@ contract PWNDeed is ERC1155, Ownable {
      * @param _did ID of the Deed the offer should be bound to
      * @param _toBePaid Amount to be paid back by the borrower
      * @return hash of the newly created offer
-     // FINDME neni to podle whitepaperu, protoze to neprijima ECR1155
      */
     function makeOffer(
         address _assetAddress,
@@ -200,7 +169,7 @@ contract PWNDeed is ERC1155, Ownable {
 
         bytes32 hash = keccak256(abi.encodePacked(_lender, nonce));
         nonce++;
-        // FINDME mozna zkontrolovat, jestli je toBePaid vetsi nez assetAmount, aby se zabranilo liske chybe?
+
         Offer storage offer = offers[hash];
         offer.loan.assetAddress = _assetAddress;
         offer.loan.amount = _assetAmount;
@@ -210,14 +179,7 @@ contract PWNDeed is ERC1155, Ownable {
 
         deeds[_did].pendingOffers.push(hash);
 
-        emit OfferMade(
-            _assetAddress,
-            _assetAmount,
-            _lender,
-            _toBePaid,
-            _did,
-            hash
-        );
+        emit OfferMade(_assetAddress, _assetAmount, _lender, _toBePaid, _did, hash);
 
         return hash;
     }
@@ -232,15 +194,12 @@ contract PWNDeed is ERC1155, Ownable {
      * @param _lender Address of the lender who made the offer
      * @dev TODO: consider ways to remove the offer from the pending offers array / maybe replace for a mapping
      */
-    function revokeOffer(bytes32 _offer, address _lender) external onlyPWN {
-        require(
-            offers[_offer].lender == _lender,
-            "This address didn't create the offer"
-        );
-        require(
-            getDeedStatus(offers[_offer].did) == 1,
-            "Can only remove offers from open Deeds"
-        );
+    function revokeOffer(
+        bytes32 _offer,
+        address _lender
+    ) external onlyPWN {
+        require(offers[_offer].lender == _lender, "This address didn't create the offer");
+        require(getDeedStatus(offers[_offer].did) == 1, "Can only remove offers from open Deeds");
 
         delete offers[_offer];
 
@@ -254,30 +213,16 @@ contract PWNDeed is ERC1155, Ownable {
      * @param _offer Hash identifying an offer
      * @param _owner Address of the borrower who issued the Deed
      */
-    // FINDME posilat hodne nabidek, ktere nemaji volny kredit na pujceni
     function acceptOffer(
         uint256 _did,
         bytes32 _offer,
         address _owner
     ) external onlyPWN {
-        require(
-            // Returns the amount of tokens of token type `id` owned by `account`.
-            balanceOf(_owner, _did) == 1,
-            "The deed doesn't belong to the caller"
-        );
+        require(balanceOf(_owner, _did) == 1, "The deed doesn't belong to the caller");
         require(getDeedStatus(_did) == 1, "Deed can't accept more offers");
 
         Deed storage deed = deeds[_did];
         deed.borrower = _owner;
-        /**
-         * FINDME: Tohle nekoresponduje s WP, kde se rika:
-         * FINDME nemazou se offers, ktery neni mozne prijmout, kvuli jiz prijmutemu tokenu to asi bude dobre
-         * The borrowing party sets an expiration date at creation. A recommended
-         * duration of a deed is 1 - 3 months. The duration won’t be adjustable based on
-         * when an offer is accepted creating an incentive to accept offers rather sooner
-         * than later
-         * Zde se ovsem expiration pocita po prijeti nabidky
-         */
         deed.expiration = uint40(block.timestamp) + deed.duration;
         deed.acceptedOffer = _offer;
         delete deed.pendingOffers;
@@ -292,12 +237,7 @@ contract PWNDeed is ERC1155, Ownable {
      * @param _did ID of the Deed which is paid back
      */
     function repayLoan(uint256 _did) external onlyPWN {
-        require(
-            getDeedStatus(_did) == 2,
-            //FINDME: spatne napsana chybova hlaska,
-            // uzivatel muze zkouset platit po vyprseni terminu
-            "Deed doesn't have an accepted offer to be paid back"
-        );
+        require(getDeedStatus(_did) == 2, "Deed doesn't have an accepted offer to be paid back");
 
         deeds[_did].status = 3;
 
@@ -310,7 +250,10 @@ contract PWNDeed is ERC1155, Ownable {
      * @param _did ID of the Deed which is claimed
      * @param _owner Address of the deed token owner
      */
-    function claim(uint256 _did, address _owner) external onlyPWN {
+    function claim(
+        uint256 _did,
+        address _owner
+    ) external onlyPWN {
         require(balanceOf(_owner, _did) == 1, "Caller is not the deed owner");
         require(getDeedStatus(_did) >= 3, "Deed can't be claimed yet");
 
@@ -325,8 +268,10 @@ contract PWNDeed is ERC1155, Ownable {
      * @param _did ID of the Deed which is burned
      * @param _owner Address of the deed token owner
      */
-    // obe podminky jsou zbytecne
-    function burn(uint256 _did, address _owner) external onlyPWN {
+    function burn(
+        uint256 _did,
+        address _owner
+    ) external onlyPWN {
         require(balanceOf(_owner, _did) == 1, "Caller is not the deed owner");
         require(deeds[_did].status == 0, "Deed can't be burned at this stage");
 
@@ -349,12 +294,7 @@ contract PWNDeed is ERC1155, Ownable {
      * @return a status number
      */
     function getDeedStatus(uint256 _did) public view returns (uint8) {
-        if (
-            deeds[_did].expiration > 0 &&
-            // FINDME: block.timestamp neslo by si s tim hrat?
-            deeds[_did].expiration < block.timestamp &&
-            deeds[_did].status != 3
-        ) {
+        if (deeds[_did].expiration > 0 && deeds[_did].expiration < block.timestamp && deeds[_did].status != 3) {
             return 4;
         } else {
             return deeds[_did].status;
@@ -398,11 +338,7 @@ contract PWNDeed is ERC1155, Ownable {
      * @param _did Deed ID to be checked
      * @return Asset construct - for definition see { MultiToken.sol }
      */
-    function getDeedCollateral(uint256 _did)
-        public
-        view
-        returns (MultiToken.Asset memory)
-    {
+    function getDeedCollateral(uint256 _did) public view returns (MultiToken.Asset memory) {
         return deeds[_did].collateral;
     }
 
@@ -447,11 +383,7 @@ contract PWNDeed is ERC1155, Ownable {
      * @param _offer Offer hash of an offer to be prompted
      * @return Asset construct - for definition see { MultiToken.sol }
      */
-    function getOfferLoan(bytes32 _offer)
-        public
-        view
-        returns (MultiToken.Asset memory)
-    {
+    function getOfferLoan(bytes32 _offer) public view returns (MultiToken.Asset memory) {
         return offers[_offer].loan;
     }
 
